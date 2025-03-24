@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+
+    <! -- Providing some styling characteristics for the different components of the register page -->
+    <style>
+        .container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="container">
+        <h2>Register</h2>
+        {% if error %}
+            <div class="error-message" style="color: red;">{{ error }}</div>
+        {% endif %}
+        {% if success %}
+            <div class="success-message" style="color: green;">{{ success }}</div>
+        {% endif %}
+        <form action="/register" method="POST">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input placeholder="Please enter your email here" type="email" id="email" name="email" value="{{ email }}" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input placeholder="Please enter your password here" type="password" id="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="confirm-password">Confirm Password:</label>
+                <input placeholder="Please enter your password again here" type="password" id="confirm-password" name="confirm-password" required>
+            </div>
+            <div class="form-group">
+                <button type="submit">Register</button>
+            </div>
+        </form>
+        <p>Already have an account? <a href="/">Login here</a></p>
+    </div>
+</body>
+</html>
