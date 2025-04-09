@@ -4,7 +4,7 @@ from sqlite3 import Error
 import bcrypt
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'  # Required for session management
+app.secret_key = 'your_secret_key_here' 
 
 
 def init_db():
@@ -61,8 +61,7 @@ init_db()
 
 
 @app.route('/')
-#renders login page when website is launched
-def login():
+def index():
     return render_template('index.html')
 
 
@@ -74,6 +73,10 @@ def register():
 @app.route('/user_select')
 def user_select():
     return render_template('user_select.html')
+
+@app.route('/login')
+def login():
+    return render_template('login.html')
 
 @app.route('/login', methods=['POST'])
 #handles login logic

@@ -1,58 +1,242 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Page</title>
-
-    <! -- Providing some styling characteristics for the different components of the log-in page -->
+    <!-- Add Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        .container {
-            max-width: 400px;
-            margin: 50px auto;
-            padding: 20px;
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .form-group {
-            margin-bottom: 15px;
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh; 
         }
-        input {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
+
+
+        /* Navigation */
+        nav {
+            background: #001841; /* Primary color */
+            color: #fff;
         }
-        .error-message {
-            color: red;
-            margin: 10px 0;
+
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .logo i {
+            margin-right: 8px;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: #f4f7fc; /* Light background */
+            padding: 3rem 0; /* Reduced vertical padding */
             text-align: center;
         }
+
+        .hero-content h1 {
+            font-size: 2.8rem;
+            color: #001841; /* Primary color */
+            margin-bottom: 1rem;
+        }
+
+        .hero-content p {
+            font-size: 1.2rem;
+            color: #555;
+    
+        }
+
+        .cta-button {
+            background: #001841; /* Primary color */
+            color: #fff;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            transition: background 0.3s ease;
+            display: inline-block; /* Align icon and text */
+            margin-bottom: 1rem; /* Space below main CTA */
+        }
+
+        .cta-button i {
+            margin-right: 8px;
+        }
+
+        .cta-button:hover {
+            background: #002a6b; /* Darker shade */
+        }
+
+        /* Login/Register Links */
+        .auth-links {
+            margin-top: 1.5rem;
+        }
+
+        .auth-links a {
+            color: #001841; /* Primary color */
+            text-decoration: underline;
+            margin: 0 10px;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 3rem 0; /* Reduced vertical padding */
+            background: #fff;
+        }
+
+        .features .container {
+            text-align: center;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            background: #f9f9f9;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .feature-card i {
+            font-size: 2.5rem;
+            color: #001841; /* Primary color */
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .feature-card p {
+            color: #666;
+        }
+
+        /* Footer */
+        footer {
+            background: #001841; /* Primary color */
+            color: #fff;
+            text-align: center;
+            padding: 1.5rem 0; /* Reduced vertical padding */
+            margin-top: 1.5rem; /* Reduced top margin */
+        }
+
+        .social-links a {
+            color: #fff;
+            margin: 0 10px;
+            font-size: 1.5rem;
+            transition: color 0.3s ease;
+        }
+
+        footer p {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .hover-expand {
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .hover-expand:hover {
+            transform: scale(1.1);
+        }
+
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+
+        /* Push push footer down */
+        .main-content {
+            flex-grow: 1; 
+        }
     </style>
-
 </head>
-
 <body>
-    <div class="container">
-        <h2>Login</h2>
-        {% if error %}
-            <div class="error-message">{{ error }}</div>
-        {% endif %}
-        {% if success %}
-            <div class="success-message" style="color: green;">{{ success }}</div>
-        {% endif %}
-        <form action="{{ url_for('login_post') }}" method="POST">
-            <div class="form-group">
-                <label for="email">Email:</label>
-                <input placeholder="Please enter your email here" type="email" id="email" name="email" required>
+    <nav>
+        <div class="container nav-content">
+            <a href="#" class="logo">
+                <i class="fas fa-chart-line"></i>
+                NittanyBiz
+            </a>
+        </div>
+    </nav>
+
+    <!-- Wrap main sections -->
+    <div class="main-content">
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Welcome to NittanyBiz</h1>
+            <a href="{{ url_for('login') }}" class="cta-button">
+                <div class="hover-expand">
+                <i class="fas fa-sign-in-alt"></i> Login to Dashboard
+                </div>
+            </a>
+            <div class="auth-links">
+                <span>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></span>
             </div>
-            <div class="form-group">
-                <label for="password">Password:</label>
-                <input placeholder="Please enter your password here" type="password" id="password" name="password" required>
+        </div>
+    </section>
+    </div> <!-- End main-content -->
+
+    <section class="features">
+        <div class="container">
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="hover-expand">
+                    <i class="fas fa-rocket"></i>
+                    <h3>Innovation First</h3>
+                    <p>Cutting edge marketplace for consumers and businesses</p>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="hover-expand">
+                    <i class="fas fa-chart-bar"></i>
+                    <h3>Data Driven</h3>
+                    <p>Built in analytics for buying habits and selling trends</p>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="hover-expand">
+                    <i class="fas fa-shield"></i>
+                    <h3>Secure & Reliable</h3>
+                    <p>Secure and reliable data processing to keep your private information safe</p>
+                </div>
+                </div>
             </div>
-            <div class="form-group">
-                <button type="submit">Login</button>
-            </div>
-        </form>
-        <p>Not registered? <a href="{{ url_for('register') }}">Create an account</a></p>
-    </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 NittanyBiz. All rights reserved.</p>
+        </div>
+    </footer>
 </body>
 </html>

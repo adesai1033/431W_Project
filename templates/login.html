@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seller Registration - NittanyBiz</title>
+    <title>Login - NittanyBiz</title>
     <!-- Add Font Awesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -61,8 +62,8 @@
             padding: 3rem 0;
         }
 
-        /* Form Styling (Shared) */
-        .registration-form {
+        /* Login Form Styling */
+        .login-form {
             max-width: 450px;
             margin: 2rem auto;
             padding: 2rem;
@@ -72,7 +73,7 @@
             text-align: center;
         }
 
-        .registration-form h2 {
+        .login-form h2 {
             color: #001841;
             margin-bottom: 1.5rem;
         }
@@ -113,19 +114,19 @@
             background: #002a6b;
         }
 
-        .message {
-             margin-bottom: 1rem;
-             font-weight: bold;
-             padding: 10px;
-             border-radius: 4px;
+        .register-link {
+            margin-top: 1.5rem;
         }
+
+        .register-link a {
+            color: #001841;
+            text-decoration: underline;
+        }
+
         .error-message {
-            color: #D8000C;
-            background-color: #FFD2D2;
-        }
-        .success-message {
-             color: #4F8A10;
-             background-color: #DFF2BF;
+            color: red;
+            margin-bottom: 1rem;
+            font-weight: bold;
         }
 
         /* Footer */
@@ -142,6 +143,7 @@
         }
     </style>
 </head>
+
 <body>
     <nav>
         <div class="container nav-content">
@@ -155,35 +157,28 @@
 
     <div class="main-content">
         <div class="container">
-            <div class="registration-form">
-                <h2>Seller Registration</h2>
+            <div class="login-form">
+                <h2>Login</h2>
                 {% if error %}
-                    <p class="message error-message">{{ error }}</p>
+                    <p class="error-message">{{ error }}</p>
                 {% endif %}
                 {% if success %}
-                    <p class="message success-message">{{ success }}</p>
+                    <div class="success-message" style="color: green;">{{ success }}</div>
                 {% endif %}
-                <form action="{{ url_for('seller_register') }}" method="POST">
+                <form action="{{ url_for('login_post') }}" method="POST">
                     <div class="form-group">
-                        <label for="business_name">Business Name:</label>
-                        <input type="text" id="business_name" name="business_name" required>
+                        <label for="email">Email:</label>
+                        <input type="email" id="email" name="email" value="{{ email or '' }}" required>
                     </div>
                     <div class="form-group">
-                        <label for="business_phone">Business Phone:</label>
-                        <input type="tel" id="business_phone" name="business_phone" pattern="[0-9\s\-\+\(\)]{7,}" title="Enter a valid phone number" required>
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" name="password" required>
                     </div>
                     <div class="form-group">
-                        <label for="business_address">Business Address:</label>
-                        <input type="text" id="business_address" name="business_address" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="bank_info">Bank Account Number:</label>
-                        <input type="text" id="bank_info" name="bank_info" pattern="[0-9]+" title="Enter numbers only" required>
-                    </div>
-                    <div class="form-group">
-                        <button type="submit">Complete Registration</button>
+                        <button type="submit">Login</button>
                     </div>
                 </form>
+                <p class="register-link">Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
             </div>
         </div>
     </div>
