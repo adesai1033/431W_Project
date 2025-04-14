@@ -1,0 +1,78 @@
+
+'''buyer and category code beginning
+@app.route('/buyers')
+def buyers():
+    if 'email' not in session:
+        return redirect(url_for('login'))
+    
+    connection = sql.connect('database.db')
+    cursor = connection.cursor()
+    
+    # Get all categories
+    cursor.execute('''
+        SELECT c1.category_name, c1.parent_category, c2.category_name as child_name
+        FROM Categories c1
+        LEFT JOIN Categories c2 ON c1.category_name = c2.parent_category
+        ORDER BY c1.category_name, c2.category_name
+    ''')
+    categories = cursor.fetchall()
+    connection.close()
+    
+    # Build category tree
+    category_tree = {}
+    for category in categories:
+        cat_name, parent, child = category
+        if parent is None:  # Root category
+            if cat_name not in category_tree:
+                category_tree[cat_name] = {
+                    'name': cat_name,
+                    'children': []
+                }
+        else:  # Child category
+            if parent not in category_tree:
+                category_tree[parent] = {
+                    'name': parent,
+                    'children': []
+                }
+            if child:  # If there's a child category
+                category_tree[parent]['children'].append({
+                    'name': child,
+                    'children': []
+                })
+    
+    # Convert to list of root categories
+    root_categories = [cat for cat in category_tree.values() if not any(cat['name'] in other['children'] for other in category_tree.values())]
+    
+    return render_template('buyers.html', root_categories=root_categories)
+
+@app.route('/category/<category_name>')
+def view_category_products(category_name):
+    if 'email' not in session:
+        return redirect(url_for('login'))
+    
+    connection = sql.connect('database.db')
+    cursor = connection.cursor()
+    
+    # Get products in this category
+    cursor.execute('''
+        SELECT * FROM Product_Listings 
+        WHERE Category = ?
+    ''', (category_name,))
+    products = cursor.fetchall()
+    
+    # Get subcategories
+    cursor.execute('''
+        SELECT category_name FROM Categories 
+        WHERE parent_category = ?
+    ''', (category_name,))
+    subcategories = cursor.fetchall()
+    
+    connection.close()
+    
+    return render_template('category_products.html', 
+                         category_name=category_name,
+                         products=products,
+                         subcategories=subcategories)
+
+###buyer and category code ending
+'''
