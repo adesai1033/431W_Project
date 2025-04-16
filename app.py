@@ -83,11 +83,11 @@ def register():
 def user_select():
     if request.method == 'POST':
         user_type = request.form.get('user_type')
-        if user_type == 'buyer':
+        if user_type == 'Buyer':
             return redirect(url_for('buyer_reg'))
-        elif user_type == 'seller':
+        elif user_type == 'Seller':
             return redirect(url_for('seller_reg'))
-        elif user_type == 'helpdesk':
+        elif user_type == 'Helpdesk':
             return redirect(url_for('helpdesk_reg'))
         else:
             return render_template('user_select.html', error='Please select a valid user type')
@@ -105,7 +105,7 @@ def login_route():
     cursor.execute('SELECT * FROM Sellers WHERE email = ?', (email,))
     result = cursor.fetchone()
     if result:
-        return render_template('sellers.html')
+        return redirect(url_for('seller'))
     cursor.execute('SELECT * FROM Helpdesk WHERE email = ?', (email,))
     result = cursor.fetchone()
     if result:
@@ -168,8 +168,16 @@ def register_post():
     session['email'] = email
     return redirect(url_for('user_select'))
 
-@app.route('/add_product', methods=['POST'])
+
+@app.route('/add_product', methods=['GET', 'POST'])
 def add_product():
+    if 'email' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'GET':
+        return render_template('add_product.html')
+
+    # Handle POST request
     connection = sql.connect('database.db')
     cursor = connection.cursor()
     listingID = random.randint(10000, 99999)
@@ -181,10 +189,10 @@ def add_product():
     product_name = request.form.get('product_name')
     email = session.get('email')
 
-    while 1>0:
+    while 1 > 0:
         cursor.execute('SELECT * FROM Product_Listings WHERE Seller_Email = ? '
-                   'and Listing_ID = ?',
-                   (email,listingID,))
+                       'and Listing_ID = ?',
+                       (email, listingID,))
         existing = cursor.fetchone()
         if not existing:
             break
@@ -193,11 +201,11 @@ def add_product():
     cursor.execute('INSERT INTO Product_Listings (Seller_Email, Listing_ID,Category,'
                    'Product_Title,Product_Name,Product_Description,'
                    'Quantity,Product_Price,Status ) '
-                   'VALUES (?,?,?,?,?,?,?,?,?);', (email, listingID,category,
-                    product_title,product_name,description,quantity,price,1))
+                   'VALUES (?,?,?,?,?,?,?,?,?);', (email, listingID, category,
+                                                   product_title, product_name, description, quantity, price, 1))
     connection.commit()
     connection.close()
-    return render_template('add_product.html')
+    return render_template('add_product.html', success="Product added successfully!")
 
 
 @app.route('/buyer_reg', methods=['GET', 'POST'])
@@ -293,6 +301,39 @@ def seller_reg():
     finally:
         connection.close()
 
+#Rendering the Sellers currently listed products
+@app.route('/seller', methods=['GET', 'POST'])
+def seller():
+    error = None
+    email = session['email']
+    result = get_seller_products(email)
+    return render_template('sellers.html', error=error, result=result)
+
+@app.route('/seller_reviews', methods=['GET', 'POST'])
+def seller_reviews():
+    error = None
+    email = session['email']
+    result = get_seller_reviews(email)
+    overall_rating = get_seller_rating(email)
+    return render_template('seller_view_reviews.html', error=error, result=result, overall_rating=overall_rating)
+
+@app.route('/view_products')
+def view_products():
+    return redirect(url_for('seller'))
+
+@app.route('/add_products')
+def edit_products():
+    return render_template('add_product.html')
+
+@app.route('/view_ratings')
+def view_ratings():
+    return redirect(url_for('seller_reviews'))
+
+@app.route('/add_category_request')
+def add_category_request():
+    return render_template('add_ctgry_req.html')
+
+
 @app.route('/logout', methods=['GET'])
 def logout():
     session.pop('email', None)
@@ -330,12 +371,10 @@ def helpdesk_reg():
 
 #@app.route('/buyers')
 #def buyers():
-  #top_categories = topLevelCategories()
+    #top_categories = topLevelCategories()
     #return render_template("buyers.html", categories=top_categories)
 
-def getProducts():
-    selected_category = request.form['selected_category']
-    subcategories = getSubCategories(selected_category)
+
 
 
 def getSubCategories(parent_category):
@@ -343,32 +382,53 @@ def getSubCategories(parent_category):
     cursor = connection.cursor()
     query = """
         SELECT category_name
-    FROM Categories
-    WHERE parent_category = ?;
+        FROM Categories
+        WHERE parent_category = ?;
     """
     cursor.execute(query, (parent_category,))
     sub = cursor.fetchall()
     connection.close()
-    lst = []
-    for i in sub:
-        lst+=list(i)
-    return lst
+    return [cat[0] for cat in sub]
 
-def topLevelCategories():
+
+def edit_buyer_details(Buyer_Email, business_name, zipcode, street_num, street_name, credit_card_num, card_type, expire_month, expire_year,security_code):
     connection = sql.connect('database.db')
     cursor = connection.cursor()
+
     query = """
-        SELECT category_name
-    FROM Categories
-    WHERE parent_category = 'Root';
+    UPDATE Credit_cards
+    SET  credit_card_num = ?, card_type = ?, expire_month = ?, expire_year = ?, security_code = ?,
+    WHERE Owner_email = ?
     """
-    cursor.execute(query)
-    toplevel = cursor.fetchall()
-    connection.close()
-    lst = []
-    for i in toplevel:
-        lst+=list(i)
-    return lst
+    cursor.execute(query, (credit_card_num, card_type, expire_month, expire_year, security_code, Buyer_Email))
+    connection.commit()
+
+    cursor.execute('SELECT buyer_address_id FROM Buyers WHERE email = ?', (Buyer_Email,))
+    id = cursor.fetchone()[0]
+
+    query = """
+    UPDATE Addresses
+    SET  zipcode = ?, street_num = ?, street_name = ?,
+    WHERE address_id = ?
+    """
+    cursor.execute(query, (zipcode, street_num, street_name, id))
+    connection.commit()
+
+    query = """
+    UPDATE Buyers
+    SET  business_name = ?,
+    WHERE email = ?
+    """
+    cursor.execute(query, (business_name, Buyer_Email))
+    connection.commit()
+    cursor.close()
+
+def get_buyer_detail():
+    email = session['email']
+    connection = sql.connect('database.db')
+    cursor = connection.cursor()
+    lst = [email]
+    
 
 
 # Generates a unique address ID
@@ -395,9 +455,9 @@ def get_seller_products(email):
     cursor = connection.cursor()
 
     query = """
-        SELECT *
+        SELECT Product_Title, Product_Name, Product_Description, Quantity, Product_Price
         FROM Product_Listings 
-        WHERE Seller_Email = ? AND Status = 1)
+        WHERE Seller_Email = ? AND Status = 1
                """
 
     cursor.execute(query, (email,))
@@ -413,15 +473,16 @@ def edit_product_details(Seller_Email, Listing_ID, Category, Product_Title, Prod
     query = """
     UPDATE Product_Listings
     SET  Category = ?, Product_Title = ?, Product_Name = ?, Product_Description = ?, Quantity = ?, Product_Price = ?, Status = ?
-    WHERE Seller_Email = ? AND Listing_ID = ?)
+    WHERE Seller_Email = ? AND Listing_ID = ?
     """
 
     cursor.execute(query, (Category, Product_Title, Product_Name, Product_Description, Quantity, Product_Price, Status, Seller_Email, Listing_ID,))
-
+    connection.commit()
+    connection.close()
     return
 
 # Getting all seller reviews
-def get_seller_feedback(email):
+def get_seller_reviews(email):
     connection = sql.connect('database.db')
     cursor = connection.cursor()
 
@@ -433,8 +494,237 @@ def get_seller_feedback(email):
 
     cursor.execute(query, (email,))
     reviews = cursor.fetchall()
-
+    connection.close()
     return reviews
+
+# Calculates seller rating
+def get_seller_rating(email):
+    reviews = get_seller_reviews(email)
+
+    if len(reviews) == 0:
+        return None
+
+    total = 0
+    for r in reviews:
+        total += r[1]
+
+    return round(total / len(reviews), 1)
+
+
+def get_pending_requests():
+    connection = sql.connect('database.db')
+    cursor = connection.cursor()
+
+    query = '''
+            SELECT * 
+            FROM Requests
+            WHERE Status = 0
+            '''
+
+    cursor.execute(query)
+    requests = cursor.fetchall()
+    connection.close()
+    return requests
+
+def get_searchable_products(keyword):
+    connection = sql.connect('database.db')
+    cursor = connection.cursor()
+
+    query = '''
+            SELECT Product_Title, Product_Name, Product_Description, Quantity, Product_Price
+            FROM Product_Listings
+            WHERE Product_Title LIKE ? OR Product_Description LIKE ? OR Category LIKE ? OR Seller_Email LIKE ?
+            '''
+
+    cursor.execute(query, (keyword,))
+    products = cursor.fetchall()
+    connection.close()
+    return products
+
+###buyer and category code beginning
+@app.route('/buyers', methods=['GET', 'POST'])
+def buyers():
+    if 'email' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'GET':
+        # Get root categories
+        categories = getSubCategories("Root")
+        return render_template('buyers.html', categories=categories, current_category=None)
+
+    # Handle POST request for category selection
+    selected_category = request.form.get('category')
+    if selected_category:
+        subcategories = getSubCategories(selected_category)
+        parent = getParentCategory(selected_category)
+        return render_template('buyers.html',
+                               categories=subcategories,
+                               current_category=selected_category,
+                               parent_category=parent)
+
+    return redirect(url_for('buyers'))
+
+
+@app.route('/category/<category_name>')
+def view_category_products(category_name):
+    if 'email' not in session:
+        return redirect(url_for('login'))
+
+    connection = sql.connect('database.db')
+    cursor = connection.cursor()
+
+    # Get products in this category
+    cursor.execute('''
+        SELECT * FROM Product_Listings 
+        WHERE Category = ?
+    ''', (category_name,))
+    products = cursor.fetchall()
+
+    # Get subcategories
+    cursor.execute('''
+        SELECT category_name FROM Categories 
+        WHERE parent_category = ?
+    ''', (category_name,))
+    subcategories = cursor.fetchall()
+
+    connection.close()
+
+    return render_template('category_products.html',
+                           category_name=category_name,
+                           products=products,
+                           subcategories=subcategories)
+
+
+def getProductsByPriceRange(category_name, min_price=None, max_price=None):
+    connection = sql.connect('database.db')
+    cursor = connection.cursor()
+
+    query = """
+        SELECT Product_Title, Product_Name, Product_Description, Quantity, Product_Price
+        FROM Product_Listings 
+        WHERE Category = ?
+    """
+    params = [category_name]
+
+    if min_price is not None:
+        query += " AND Product_Price >= ?"
+        params.append(min_price)
+
+    if max_price is not None:
+        query += " AND Product_Price <= ?"
+        params.append(max_price)
+
+    query += " ORDER BY Product_Price"
+
+    cursor.execute(query, params)
+    products = cursor.fetchall()
+    connection.close()
+
+    return products
+
+def getProductsByTitle(search=None):
+    connection = sql.connect('database.db')
+    cursor = connection.cursor()
+
+    query = """
+            SELECT Product_Title, Product_Name, Product_Description, Quantity, Product_Price
+            FROM Product_Listings 
+            WHERE Product_Title LIKE ? OR Product_Name LIKE ?
+            """
+    search_pattern = f'%{search}%'
+    params = [search_pattern, search_pattern]
+
+    cursor.execute(query, params)
+    products = cursor.fetchall()
+    connection.close()
+
+    return products
+
+###buyer and category code ending
+
+
+
+def getParentCategory(category_name):
+    connection = sql.connect('database.db')
+    cursor = connection.cursor()
+    query = """
+        SELECT parent_category
+        FROM Categories
+        WHERE category_name = ?;
+    """
+    cursor.execute(query, (category_name,))
+    parent = cursor.fetchone()
+    connection.close()
+    return parent[0] if parent else None
+
+
+@app.route('/getProducts', methods=['POST'])
+def getProducts():
+    selected_category = request.form['selected_category']
+    final = [selected_category]
+    subcategories = getSubCategories(selected_category)
+    final += subcategories
+    for i in subcategories:
+        for k in getSubCategories(i):
+            if k != []:
+                final.append(k)
+    connection = sql.connect('database.db')
+    cursor = connection.cursor()
+    placeholders = ', '.join(['?'] * len(final))
+    query = f"""
+        SELECT DISTINCT * FROM Product_Listings
+        WHERE category IN ({placeholders});
+    """
+    cursor.execute(query, final)
+    rows = cursor.fetchall()
+    connection.close()
+    for i in range(len(rows)):
+        rows[i] = list(rows[i])
+    return rows
+
+@app.route('/getProductsByPriceRange', methods=['POST'])
+def getProductsByPriceRange():
+    selected_category = request.form['selected_category']
+    min_price = request.form.get('min_price', '')
+    max_price = request.form.get('max_price', '')
+
+    # Get all subcategories
+    final = [selected_category]
+    subcategories = getSubCategories(selected_category)
+    final += subcategories
+    for i in subcategories:
+        for k in getSubCategories(i):
+            if k != []:
+                final.append(k)
+
+    connection = sql.connect('database.db')
+    cursor = connection.cursor()
+
+    # Build the query based on whether min/max prices are provided
+    placeholders = ', '.join(['?'] * len(final))
+    query = f"""
+        SELECT DISTINCT * FROM Product_Listings
+        WHERE category IN ({placeholders})
+    """
+    params = final
+
+    if min_price:
+        query += " AND CAST(REPLACE(REPLACE(Product_Price, '$', ''), ',', '') AS DECIMAL) >= ?"
+        params.append(min_price)
+    if max_price:
+        query += " AND CAST(REPLACE(REPLACE(Product_Price, '$', ''), ',', '') AS DECIMAL) <= ?"
+        params.append(max_price)
+
+    print("Query:", query)  # Debug print
+    print("Params:", params)  # Debug print
+
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+    connection.close()
+
+    # Convert tuples to lists for JSON serialization
+    return [list(row) for row in rows]
+
 
 '''
 Helper code that displays contents of user table
@@ -454,85 +744,6 @@ def query():
     except Error as e:
         return f"Error: {str(e)}"
 '''
-
-@app.route('/view-products')
-def view_products():
-    return render_template('view_products.html')
-
-@app.route('/edit-products')
-def edit_products():
-    return render_template('edit_products.html')
-
-@app.route('/view-ratings')
-def view_ratings():
-    return render_template('view_ratings.html')
-
-###buyer and category code beginning
-@app.route('/buyers')
-def buyers():
-    if 'email' not in session:
-        return redirect(url_for('login'))
-    
-    connection = sql.connect('database.db')
-    cursor = connection.cursor()
-    
-    # Get all categories and their relationships
-    cursor.execute('''
-        SELECT parent_category, category_name
-        FROM Categories
-        ORDER BY parent_category, category_name
-    ''')
-    categories = cursor.fetchall()
-    connection.close()
-    
-    # Build category tree recursively
-    def build_category_tree(parent_name):
-        children = []
-        for parent, name in categories:
-            if parent == parent_name:
-                child = {
-                    'name': name,
-                    'children': build_category_tree(name)
-                }
-                children.append(child)
-        return children
-    
-    # Start with root categories
-    category_tree = build_category_tree('Root')
-    
-    return render_template('buyers.html', root_categories=category_tree)
-
-@app.route('/category/<category_name>')
-def view_category_products(category_name):
-    if 'email' not in session:
-        return redirect(url_for('login'))
-    
-    connection = sql.connect('database.db')
-    cursor = connection.cursor()
-    
-    # Get products in this category
-    cursor.execute('''
-        SELECT * FROM Product_Listings 
-        WHERE Category = ?
-    ''', (category_name,))
-    products = cursor.fetchall()
-    
-    # Get subcategories
-    cursor.execute('''
-        SELECT category_name FROM Categories 
-        WHERE parent_category = ?
-    ''', (category_name,))
-    subcategories = cursor.fetchall()
-    
-    connection.close()
-    
-    return render_template('category_products.html', 
-                         category_name=category_name,
-                         products=products,
-                         subcategories=subcategories)
-
-###buyer and category code ending
-
 
 if __name__ == '__main__':
     app.run(debug=True)

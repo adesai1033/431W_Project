@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ category_name }} - NittanyBusiness</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f4f7fc;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .filter-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            width: 250px;
+            height: fit-content;
+        }
+
+        .filter-title {
+            color: #001841;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .price-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .price-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .filter-btn {
+            background: #001841;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .filter-btn:hover {
+            background: #002a6b;
+        }
+
+        .products-section {
+            flex: 1;
+        }
+
+        nav {
+            background: #001841;
+            color: #fff;
+            padding: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .logo {
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding-left: 20px;
+        }
+
+        .logout-btn {
+            color: #fff;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 1px solid #fff;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .logout-btn:hover {
+            background: #fff;
+            color: #001841;
+        }
+
+        .main-content {
+            padding: 2rem 0;
+            flex-grow: 1;
+        }
+
+        .page-title {
+            color: #001841;
+            margin-bottom: 2rem;
+            text-align: center;
+            font-size: 2rem;
+        }
+
+        .back-btn {
+            display: inline-block;
+            background: #f0f0f0;
+            color: #333;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        .back-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 2rem;
+            padding: 1rem;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .product-title {
+            color: #001841;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-price {
+            color: #2ecc71;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-description {
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .product-quantity {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .listing-id {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .product-category {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+
+        .no-products {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 2rem;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterForm = document.getElementById('priceFilterForm');
+            const minPrice = document.getElementById('minPrice');
+            const maxPrice = document.getElementById('maxPrice');
+
+            function loadProducts(category, min = '', max = '') {
+                const formData = new URLSearchParams();
+                formData.append('selected_category', category);
+                if (min) formData.append('min_price', min);
+                if (max) formData.append('max_price', max);
+
+                fetch('/getProductsByPriceRange', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData.toString()
+                })
+                .then(response => response.json())
+                .then(products => {
+                    const productsGrid = document.querySelector('.products-grid');
+                    if (products.length > 0) {
+                        productsGrid.innerHTML = products.map(product => `
+                            <div class="product-card">
+                                <h2 class="product-title">${product[3]}</h2>
+                                <p class="product-price">${product[7]}</p>
+                                <p class="product-description">${product[5]}</p>
+                                <p class="product-quantity">Quantity available: ${product[6]}</p>
+                                <p class="listing-id">Listing ID: ${product[1]}</p>
+                                <p class="product-category">Category: ${product[2]}</p>
+                            </div>
+                        `).join('');
+                    } else {
+                        productsGrid.innerHTML = '<div class="no-products"><p>No products found in this price range.</p></div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.querySelector('.products-grid').innerHTML = '<div class="no-products"><p>Error loading products.</p></div>';
+                });
+            }
+
+            // Initial load
+            loadProducts('{{ category_name }}');
+
+            // Filter form submission
+            filterForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const min = minPrice.value.trim();
+                const max = maxPrice.value.trim();
+                loadProducts('{{ category_name }}', min, max);
+            });
+
+            // Add clear filter button
+            const clearButton = document.createElement('button');
+            clearButton.type = 'button';
+            clearButton.className = 'filter-btn';
+            clearButton.textContent = 'Clear Filter';
+            clearButton.style.marginTop = '0.5rem';
+            clearButton.style.backgroundColor = '#666';
+            clearButton.onclick = function() {
+                minPrice.value = '';
+                maxPrice.value = '';
+                loadProducts('{{ category_name }}');
+            };
+            filterForm.appendChild(clearButton);
+        });
+    </script>
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('index') }}" class="logo">
+            NittanyBusiness
+        </a>
+        <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+    </nav>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="filter-card">
+                <h3 class="filter-title">Filter by Price</h3>
+                <form id="priceFilterForm" class="price-inputs">
+                    <input type="number" id="minPrice" class="price-input" placeholder="Min Price" min="0" step="0.01">
+                    <input type="number" id="maxPrice" class="price-input" placeholder="Max Price" min="0" step="0.01">
+                    <button type="submit" class="filter-btn">Apply Filter</button>
+                </form>
+            </div>
+
+            <div class="products-section">
+                <a href="{{ url_for('buyers') }}" class="back-btn">← Back to Categories</a>
+                <h1 class="page-title">{{ category_name }}</h1>
+                
+                <div class="products-grid">
+                    <p>Loading products...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

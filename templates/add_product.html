@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Product</title>
-    <!-- Add Font Awesome CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -22,25 +20,59 @@
         }
 
         .container {
-            max-width: 1100px;
+            max-width: 800px;
             margin: 0 auto;
             padding: 0 20px;
         }
 
-        /* Navigation */
+        /* header components: */
         nav {
             background: #001841;
             color: #fff;
-            padding: 0.8rem 0;
+            padding: 1rem 0;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             position: relative;
         }
-
+        .logo {
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding-left: 20px;
+        }
         .nav-content {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            padding-left: 0;
-            margin-left: 0;
+            padding: 0 20px;
+        }
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 0.5rem 1rem;
+            transition: color 0.3s ease;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+        .logout-btn {
+            color: #fff;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 1px solid #fff;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        .logout-btn:hover {
+            background: #fff;
+            color: #001841;
         }
 
         .logo {
@@ -51,68 +83,13 @@
             padding-left: 20px;
         }
 
-        .logo i {
-            margin-right: 8px;
-        }
-
         .form-container {
-            max-width: 800px;
+            max-width: 600px;
             margin: 30px auto;
             padding: 25px;
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .image-section {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 300px;
-        }
-
-        .image-preview {
-            width: 100%;
-            max-width: 300px;
-            height: 300px;
-            background: #fff;
-            border: 2px dashed #ddd;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 15px;
-            overflow: hidden;
-        }
-
-        .image-preview img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-
-        .image-upload-btn {
-            background: #001841;
-            color: white;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-
-        .image-upload-btn:hover {
-            background: #002a6b;
         }
 
         .form-group {
@@ -165,12 +142,18 @@
             color: red;
             margin-bottom: 15px;
             text-align: center;
+            padding: 10px;
+            background-color: #ffebee;
+            border-radius: 4px;
         }
 
         .success-message {
             color: green;
             margin-bottom: 15px;
             text-align: center;
+            padding: 10px;
+            background-color: #e8f5e9;
+            border-radius: 4px;
         }
 
         .price-quantity {
@@ -182,11 +165,15 @@
 </head>
 <body>
     <nav>
-        <div class="container nav-content">
-            <a href="#" class="logo">
-                <i class="fas fa-chart-line"></i>
-                NittanyBiz
-            </a>
+        <div class="nav-content">
+            <a href="{{ url_for('index') }}" class="logo">NittanyBusiness</a>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
+
+        <div class="nav-links">
+            <a href="/view_products">View Products</a>
+            <a href="/view_ratings">View Ratings</a>
+            <a href="/add_products">Add Products</a>
         </div>
     </nav>
 
@@ -198,71 +185,47 @@
         {% if success %}
             <p class="success-message">{{ success }}</p>
         {% endif %}
-        <form action="/add_product" method="POST" enctype="multipart/form-data">
-            <div class="form-grid">
-                <div class="image-section">
-                    <div class="image-preview">
-                        <img src="/static/square_cardboard_box.png" alt="Product Preview" id="imagePreview">
-                    </div>
-                    <input type="file" id="productImage" name="product_image" accept="image/*" style="display: none;" onchange="previewImage(event)">
-                    <button type="button" class="image-upload-btn" onclick="document.getElementById('productImage').click()">
-                        <i class="fas fa-upload"></i> Upload Product Image
-                    </button>
-                </div>
-                <div class="form-section">
-                    <div class="form-group">
-                        <label for="product_title">Product Title</label>
-                        <input type="text" id="product_title" name="product_title" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="product_name">Product Name</label>
-                        <input type="text" id="product_name" name="product_name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="description">Product Description</label>
-                        <textarea id="description" name="description" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="category">Category</label>
-                        <select id="category" name="category" required>
-                            <option value="">Select a category</option>
-                            <option value="Electronics">Electronics</option>
-                            <option value="Clothing">Clothing</option>
-                            <option value="Home">Home</option>
-                            <option value="Books">Books</option>
-                            <option value="Other">Other</option>
-                        </select>
-                        <div style="margin-top: 5px; text-align: right;">
-                            <a href="{{ url_for('add_category_request') }}" style="color: #001841; text-decoration: none; font-size: 0.9rem;">
-                                Don't see your category? Request a new one
-                            </a>
-                        </div>
-                    </div>
-                    <div class="price-quantity">
-                        <div class="form-group">
-                            <label for="price">Price</label>
-                            <input type="number" id="price" name="price" step="0.01" min="0" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="quantity">Quantity</label>
-                            <input type="number" id="quantity" name="quantity" min="1" required>
-                        </div>
-                    </div>
-                    <button type="submit">Add Product</button>
+        <form action="{{ url_for('add_product') }}" method="POST">
+            <div class="form-group">
+                <label for="product_title">Product Title</label>
+                <input type="text" id="product_title" name="product_title" required>
+            </div>
+            <div class="form-group">
+                <label for="product_name">Product Name</label>
+                <input type="text" id="product_name" name="product_name" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Product Description</label>
+                <textarea id="description" name="description" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="category">Category</label>
+                <select id="category" name="category" required>
+                    <option value="">Select a category</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Clothing">Clothing</option>
+                    <option value="Home">Home</option>
+                    <option value="Books">Books</option>
+                    <option value="Other">Other</option>
+                </select>
+                <div style="margin-top: 5px; text-align: right;">
+                    <a href="{{ url_for('add_category_request') }}" style="color: #001841; text-decoration: none; font-size: 0.9rem;">
+                        Don't see your category? Request a new one
+                    </a>
                 </div>
             </div>
+            <div class="price-quantity">
+                <div class="form-group">
+                    <label for="price">Price ($)</label>
+                    <input type="number" id="price" name="price" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="quantity">Quantity</label>
+                    <input type="number" id="quantity" name="quantity" min="1" required>
+                </div>
+            </div>
+            <button type="submit">Add Product</button>
         </form>
     </div>
-
-    <script>
-        function previewImage(event) {
-            const reader = new FileReader();
-            reader.onload = function() {
-                const output = document.getElementById('imagePreview');
-                output.src = reader.result;
-            }
-            reader.readAsDataURL(event.target.files[0]);
-        }
-    </script>
 </body>
 </html>
