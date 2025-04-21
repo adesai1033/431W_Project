@@ -4,6 +4,7 @@ from sqlite3 import Error
 import bcrypt
 import random
 import string
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = '1RnTEtT1YR'
@@ -109,7 +110,7 @@ def login_route():
     cursor.execute('SELECT * FROM Helpdesk WHERE email = ?', (email,))
     result = cursor.fetchone()
     if result:
-        return render_template('helpdesk.html')
+        return redirect(url_for('helpdesk'))
     return redirect(url_for('user_select'))
 
 @app.route('/login', methods=['POST'])
@@ -346,7 +347,7 @@ def helpdesk_reg():
         return redirect(url_for('register'))
 
     if request.method == 'GET':
-        return render_template('helpdesk_reg.html')
+        return render_template('helpdesk.html')
 
     # Handle POST request
     email = session['email']  # Get email from session
@@ -391,45 +392,110 @@ def getSubCategories(parent_category):
     return [cat[0] for cat in sub]
 
 
-def edit_buyer_details(Buyer_Email, business_name, zipcode, street_num, street_name, credit_card_num, card_type, expire_month, expire_year,security_code):
+def edit_buyer_details(Buyer_Email, business_name, zipcode, street_num, street_name,
+                       credit_card_num, card_type, expire_month, expire_year, security_code):
     connection = sql.connect('database.db')
     cursor = connection.cursor()
 
     query = """
     UPDATE Credit_cards
-    SET  credit_card_num = ?, card_type = ?, expire_month = ?, expire_year = ?, security_code = ?,
+    SET credit_card_num = ?, card_type = ?, expire_month = ?, expire_year = ?, security_code = ?
     WHERE Owner_email = ?
     """
     cursor.execute(query, (credit_card_num, card_type, expire_month, expire_year, security_code, Buyer_Email))
     connection.commit()
 
     cursor.execute('SELECT buyer_address_id FROM Buyers WHERE email = ?', (Buyer_Email,))
-    id = cursor.fetchone()[0]
+    address_id_row = cursor.fetchone()
+    address_id = address_id_row[0]
 
     query = """
-    UPDATE Addresses
-    SET  zipcode = ?, street_num = ?, street_name = ?,
+    UPDATE Address
+    SET zipcode = ?, street_num = ?, street_name = ?
     WHERE address_id = ?
     """
-    cursor.execute(query, (zipcode, street_num, street_name, id))
+    cursor.execute(query, (zipcode, street_num, street_name, address_id))
     connection.commit()
 
     query = """
     UPDATE Buyers
-    SET  business_name = ?,
+    SET business_name = ?
     WHERE email = ?
     """
     cursor.execute(query, (business_name, Buyer_Email))
     connection.commit()
-    cursor.close()
 
-def get_buyer_detail():
+    cursor.close()
+    connection.close()
+
+
+@app.route('/get_buyer_info', methods=['GET', 'POST'])
+def get_buyer_info():
     email = session['email']
+
+    if request.method == 'POST':
+        business_name = request.form['business_name']
+        zipcode = request.form['zipcode']
+        street_num = request.form['street_num']
+        street_name = request.form['street_name']
+        credit_card_num = request.form['credit_card_num']
+        card_type = request.form['card_type']
+        expire_month = request.form['expire_month']
+        expire_year = request.form['expire_year']
+        security_code = request.form['security_code']
+
+        edit_buyer_details(email, business_name, zipcode, street_num, street_name,
+                           credit_card_num, card_type, expire_month, expire_year, security_code)
+
     connection = sql.connect('database.db')
     cursor = connection.cursor()
-    lst = [email]
-    
+    query = '''
+        SELECT
+            b.business_name,
+            a.zipcode,
+            a.street_num,
+            a.street_name,
+            c.credit_card_num,
+            c.card_type,
+            c.expire_month,
+            c.expire_year,
+            c.security_code
+        FROM Buyers b
+        JOIN Address a ON b.buyer_address_id = a.address_id
+        JOIN Credit_Cards c ON b.email = c.Owner_email
+        WHERE b.email = ?
+    '''
+    cursor.execute(query, (email,))
+    buyer_info = cursor.fetchone()
+    connection.close()
 
+    return render_template('edit_buyer_details.html', info=buyer_info)
+
+def get_buyer_orders(email):
+    connection = sql.connect('database.db')
+    cursor = connection.cursor()
+
+    query = """
+            SELECT o.Order_ID, pl.Product_Name, o.Seller_Email, o.Date
+            FROM Orders o, Product_Listings pl
+            WHERE o.Buyer_Email = ? AND o.Listing_ID = pl.Listing_ID and o.Order_ID NOT IN (SELECT Order_ID
+            FROM Buyers b           )
+            
+            """
+    cursor.execute(query, (email,))
+    orders = cursor.fetchall()
+    connection.close()
+    return orders
+
+def submit_new_review(order_id, rate, desc):
+    connection = sql.connect('database.db')
+    cursor = connection.cursor()
+
+    query = "INSERT INTO Reviews (Order_ID, Rate, Review_Desc) VALUES (?, ?, ?)"
+
+    cursor.execute(query, (order_id, rate, desc))
+    connection.commit()
+    connection.close()
 
 # Generates a unique address ID
 def generate_unique_address_id():
@@ -455,14 +521,14 @@ def get_seller_products(email):
     cursor = connection.cursor()
 
     query = """
-        SELECT Product_Title, Product_Name, Product_Description, Quantity, Product_Price
+        SELECT Seller_Email, Listing_ID, Category, Product_Title, Product_Name, Product_Description, Quantity, Product_Price
         FROM Product_Listings 
         WHERE Seller_Email = ? AND Status = 1
                """
 
     cursor.execute(query, (email,))
     products = cursor.fetchall()
-
+    connection.close()
     return products
 
 # Function for a seller to edit their information
@@ -480,6 +546,38 @@ def edit_product_details(Seller_Email, Listing_ID, Category, Product_Title, Prod
     connection.commit()
     connection.close()
     return
+
+@app.route('/edit_product', methods=['POST'])
+def edit_product():
+    Seller_Email = request.form['Seller_Email']
+    Listing_ID = request.form['Listing_ID']
+    Product_Title = request.form['Product_Title']
+    Product_Name = request.form['Product_Name']
+    Product_Description = request.form['Product_Description']
+    Quantity = request.form['Quantity']
+    Product_Price = request.form['Product_Price']
+    Category = request.form['Category']
+    Status = 1
+
+    edit_product_details(Seller_Email, Listing_ID, Category, Product_Title, Product_Name, Product_Description, Quantity, Product_Price, Status)
+
+    return redirect(url_for('seller'))
+
+@app.route('/delete_product', methods=['POST'])
+def delete_product():
+    Seller_Email = request.form['Seller_Email']
+    Listing_ID = request.form['Listing_ID']
+    Product_Title = request.form['Product_Title']
+    Product_Name = request.form['Product_Name']
+    Product_Description = request.form['Product_Description']
+    Quantity = request.form['Quantity']
+    Product_Price = request.form['Product_Price']
+    Category = request.form['Category']
+    Status = 0
+
+    edit_product_details(Seller_Email, Listing_ID, Category, Product_Title, Product_Name, Product_Description, Quantity, Product_Price, Status)
+
+    return redirect(url_for('seller'))
 
 # Getting all seller reviews
 def get_seller_reviews(email):
@@ -517,14 +615,17 @@ def get_pending_requests():
 
     query = '''
             SELECT * 
-            FROM Requests
-            WHERE Status = 0
+            FROM Request
+            WHERE request_status = 0
             '''
 
     cursor.execute(query)
     requests = cursor.fetchall()
     connection.close()
-    return requests
+    lst = []
+    for i in requests:
+        lst.append(list(i))
+    return lst
 
 def get_searchable_products(keyword):
     connection = sql.connect('database.db')
@@ -564,6 +665,20 @@ def buyers():
 
     return redirect(url_for('buyers'))
 
+@app.route('/buyer_order_history')
+def buyer_order_history():
+    email = session.get('email')
+    result = get_buyer_orders(email)
+    return render_template('buyer_order_history.html', result=result)
+
+@app.route('/submit_review', methods=['POST'])
+def submit_review():
+    order_id = request.form['Order_ID']
+    rate = int(request.form['rating'])
+    desc = request.form['reviewText']
+
+    submit_new_review(order_id, rate, desc)
+    return redirect(url_for('buyer_order_history'))
 
 @app.route('/category/<category_name>')
 def view_category_products(category_name):
@@ -726,7 +841,253 @@ def getProductsByPriceRange():
     return [list(row) for row in rows]
 
 
+def get_current_date():
+    return datetime.now().strftime("%Y/%m/%d")
+
+@app.route('/helpdesk', methods=['GET', 'POST'])
+def helpdesk():
+    result = get_pending_requests()
+    return render_template('helpdesk.html',result = result)
+
+
+@app.route('/helpdesk_app')
+def helpdesk_app():
+    return render_template('helpdesk_app.html')
+
+
+@app.route('/submit_helpdesk_app', methods=['POST'])
+def submit_helpdesk_app():
+    email = request.form.get('email')
+    password = request.form.get('password')
+    application_text = request.form.get('application_text')
+
+    # Hash the password
+    hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+    connection = sql.connect('database.db')
+    cursor = connection.cursor()
+
+    try:
+        # Check if email already exists
+        cursor.execute('SELECT * FROM Users WHERE email = ?', (email,))
+        if cursor.fetchone():
+            return render_template('helpdesk_app.html', error="Email already registered")
+
+        # Create helpdesk_applications table if it doesn't exist
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS helpdesk_applications (
+                email VARCHAR PRIMARY KEY,
+                password VARCHAR,
+                FOREIGN KEY (email) REFERENCES Users(email)
+            )
+        ''')
+
+        # Insert into helpdesk_applications table
+        cursor.execute('INSERT INTO helpdesk_applications (email, password) VALUES (?, ?)', (email, hashed_pw))
+
+        # Find helpdesk staff with least pending requests
+        cursor.execute('''
+            SELECT h.email, COUNT(r.request_id) as pending_count
+            FROM Helpdesk h
+            LEFT JOIN Request r ON h.email = r.helpdesk_staff_email AND r.request_status = 1
+            GROUP BY h.email
+            ORDER BY pending_count ASC
+            LIMIT 1
+        ''')
+        assigned_staff = cursor.fetchone()
+        assigned_email = assigned_staff[0] if assigned_staff else None
+
+        # Generate a unique 3-digit request ID
+        request_id = random.randint(100, 999)
+        while True:
+            cursor.execute('SELECT * FROM Request WHERE request_id = ?', (request_id,))
+            if not cursor.fetchone():
+                break
+            request_id = random.randint(100, 999)
+
+        # Insert into Request table
+        cursor.execute('''
+            INSERT INTO Request (request_id, sender_email, helpdesk_staff_email, request_type, request_desc, request_status)
+            VALUES (?, ?, ?, 'APP', ?, 0)
+        ''', (request_id, email, assigned_email, application_text))
+
+        connection.commit()
+        return render_template('helpdesk_app.html', success="Application submitted successfully!")
+    except Error as e:
+        return render_template('helpdesk_app.html', error="Error submitting application: " + str(e))
+    finally:
+        connection.close()
+
+
+@app.route('/purchase', methods=['POST'])
+def purchase():
+    if 'email' not in session:
+        return redirect(url_for('login'))
+
+    listing_id = request.form.get('listing_id')
+    quantity = int(request.form.get('quantity'))
+    category = request.form.get('category')
+
+    connection = sql.connect('database.db')
+    cursor = connection.cursor()
+
+    try:
+        # Get product details
+        cursor.execute('SELECT Product_Title, Product_Price, Seller_Email FROM Product_Listings WHERE Listing_ID = ?',
+                       (listing_id,))
+        product = cursor.fetchone()
+        if not product:
+            return redirect(url_for('view_category_products', category_name=category, error='Product not found'))
+
+        product_title, price_str, seller_email = product
+
+        # Clean the price string and convert to float
+        price = float(price_str.replace('$', '').strip())
+
+        # Calculate total payment
+        total_payment = price * quantity
+
+        # Store order details in session for checkout
+        session['pending_order'] = {
+            'listing_id': listing_id,
+            'quantity': quantity,
+            'category': category,
+            'product_title': product_title,
+            'price': price,
+            'seller_email': seller_email,
+            'total_payment': total_payment
+        }
+
+        return redirect(url_for('secure_checkout'))
+
+    except Error as e:
+        return redirect(url_for('view_category_products', category_name=category, error=str(e)))
+    except ValueError as e:
+        return redirect(url_for('view_category_products', category_name=category, error='Invalid price format'))
+    finally:
+        connection.close()
+
+
+@app.route('/secure_checkout', methods=['GET', 'POST'])
+def secure_checkout():
+    if 'email' not in session or 'pending_order' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'GET':
+        order = session['pending_order']
+        payment_info = getPaymentInfo()
+        return render_template('secure_checkout.html',
+                               order=order,
+                               buyer_email=session['email'],
+                               payment_info=payment_info)
+
+    order = session['pending_order']
+    connection = sql.connect('database.db')
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute('SELECT Quantity FROM Product_Listings WHERE Listing_ID = ?', (order['listing_id'],))
+        current_quantity = cursor.fetchone()[0]
+
+        if order['quantity'] > current_quantity:
+            return render_template('secure_checkout.html',
+                                   order=order,
+                                   buyer_email=session['email'],
+                                   error='Not enough stock available')
+
+        order_id = random.randint(100000, 999999)
+        while True:
+            cursor.execute('SELECT * FROM Orders WHERE Order_ID = ?', (order_id,))
+            if not cursor.fetchone():
+                break
+            order_id = random.randint(100000, 999999)
+
+        new_quantity = current_quantity - order['quantity']
+        if new_quantity == 0:
+            cursor.execute(
+                'UPDATE Product_Listings SET Quantity = ?, Status = ? WHERE Seller_Email = ? AND Listing_ID = ?',
+                (0, 2, order['seller_email'], order['listing_id']))
+        else:
+            cursor.execute('UPDATE Product_Listings SET Quantity = ? WHERE Listing_ID = ?',
+                           (new_quantity, order['listing_id']))
+        connection.commit()
+
+        # Insert into Orders table
+        cursor.execute('''
+            INSERT INTO Orders (Order_ID, Seller_Email, Listing_ID, Buyer_Email, Date, Quantity, Payment)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (order_id, order['seller_email'], order['listing_id'], session['email'],
+              get_current_date(), order['quantity'], order['total_payment']))
+        connection.commit()
+
+        # Update seller's balance
+        cursor.execute('SELECT balance FROM Sellers WHERE email = ?', (order['seller_email'],))
+        result = cursor.fetchone()[0]
+        result += order['total_payment']
+        cursor.execute('UPDATE Sellers SET balance = ? WHERE email = ?', (result, order['seller_email'],))
+        connection.commit()
+
+        session.pop('pending_order', None)  # Clear pending order
+        return redirect(url_for('buyer_order_history'))
+
+    except Error as e:
+        connection.rollback()
+        return render_template('secure_checkout.html',
+                               order=order,
+                               buyer_email=session['email'],
+                               error='Error processing order: ' + str(e))
+    finally:
+        connection.close()
+
+
+def getPaymentInfo():
+    email = session.get('email')
+    connection = sql.connect('database.db')
+    cursor = connection.cursor()
+    cursor.execute('SELECT * FROM Credit_Cards WHERE Owner_email = ?', (email,))
+    result = cursor.fetchall()
+    lst = []
+    for i in result:
+        for k in i:
+            lst.append(k)
+    return lst
 '''
+@app.route('/checkout', methods=['GET', 'POST'])
+def checkout():
+    listing_id = request.form['listing_id']
+    seller_email = request.form['seller_email']
+    price = request.form['price']
+    quantity = int(request.form['quantity'])
+    buyer_email = session.get('email')
+    payment = price * quantity
+    order_id = random.randint(100000, 999999)
+    order_date = get_current_date()
+    connection = sql.connect('database.db')
+    cursor = connection.cursor()
+    cursor.execute(
+        INSERT INTO orders (Order_ID, Seller_Email, Listing_ID, Buyer_Email, Date, Quantity, Payment)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    , (order_id, seller_email, listing_id, buyer_email, order_date, quantity, payment))
+    connection.commit()
+
+    cursor.execute('SELECT balance FROM Sellers WHERE email = ?', (seller_email,))
+    result = cursor.fetchone()[0]
+    result+=payment
+    cursor.execute('UPDATE Sellers SET balance = ? WHERE email = ?', (result, seller_email,))
+    connection.commit()
+
+    cursor.execute('SELECT Quantity FROM Product_Listings WHERE Seller_Email = ? AND Listing_ID = ?', (seller_email,listing_id,))
+    result = cursor.fetchone()[0]
+    if result == quantity:
+        cursor.execute('UPDATE Product_Listings SET Quantity = ?, Status = ? WHERE email = ? AND Listing_ID = ?', (0,2, seller_email,listing_id,))
+    else:
+        result-=quantity
+        cursor.execute('UPDATE Product_Listings SET Quantity = ? WHERE email = ? AND Listing_ID = ?', (result, seller_email,listing_id,))
+    connection.commit()
+    connection.close()
+    return redirect(url_for('buyers'))
+
+
 Helper code that displays contents of user table
 @app.route('/query')
 def query():

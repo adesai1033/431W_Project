@@ -65,6 +65,7 @@
             color: #001841;
         }
 
+        /* Overall padding */
         .main-content {
             padding: 2rem;
         }
@@ -99,19 +100,90 @@
                 <th scope="col">Description</th>
                 <th scope="col">Quantity</th>
                 <th scope="col">Price</th>
+                <th scope="col">Action</th>
             </tr>
             </thead>
             <tbody>
-            {% for Product_Title, Product_Name, Product_Description, Quantity, Product_Price in result %}
-                <tr>
-                    <td contenteditable="true">{{ Product_Title }}</td>
-                    <td contenteditable="true">{{ Product_Name }}</td>
-                    <td contenteditable="true">{{ Product_Description }}</td>
-                    <td contenteditable="true">{{ Quantity }}</td>
-                    <td contenteditable="true">{{ Product_Price }}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
+        {% for Seller_Email, Listing_ID, Category, Product_Title, Product_Name, Product_Description, Quantity, Product_Price in result %}
+        <tr>
+            <td>{{ Product_Title }}</td>
+            <td>{{ Product_Name }}</td>
+            <td>{{ Product_Description }}</td>
+            <td>{{ Quantity }}</td>
+            <td>{{ Product_Price }}</td>
+            <td>
+                <!-- Edit Button (triggers modal) -->
+                <button class="btn btn-warning btn-sm" data-toggle="modal" data-target="#editModal{{ Listing_ID }}">Edit</button>
+
+                <!-- Delete Button -->
+                <form action="{{ url_for('delete_product') }}" method="POST" style="display:inline;">
+                    <input type="hidden" name="Seller_Email" value="{{ Seller_Email }}">
+                    <input type="hidden" name="Listing_ID" value="{{ Listing_ID }}">
+                    <input type="hidden" name="Category" value="{{ Category }}">
+                    <input type="hidden" name="Product_Title" value="{{ Product_Title }}">
+                    <input type="hidden" name="Product_Name" value="{{ Product_Name }}">
+                    <input type="hidden" name="Product_Description" value="{{ Product_Description }}">
+                    <input type="hidden" name="Quantity" value="{{ Quantity }}">
+                    <input type="hidden" name="Product_Price" value="{{ Product_Price }}">
+                    <input type="hidden" name="Status" value="{{ Status }}">
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+            </td>
+        </tr>
+
+        <!-- Edit Modal -->
+        <div class="modal" id="editModal{{ Listing_ID }}" tabindex="-1" role="dialog">
+          <div class="modal-dialog" role="document">
+            <form method="POST" action="{{ url_for('edit_product') }}">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Edit - {{ Product_Title }}</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+
+                <div class="modal-body">
+                  <!-- Hidden keys -->
+                  <input type="hidden" name="Seller_Email" value="{{ Seller_Email }}">
+                  <input type="hidden" name="Listing_ID" value="{{ Listing_ID }}">
+                  <input type="hidden" name="Status" value="{{ Status }}">
+                     <input type="hidden" name="Category" value="{{ Category }}">
+
+                  <div class="form-group">
+                    <label>Product Title</label>
+                    <input type="text" class="form-control" name="Product_Title" value="{{ Product_Title }}">
+                  </div>
+                  <div class="form-group">
+                    <label>Product Name</label>
+                    <input type="text" class="form-control" name="Product_Name" value="{{ Product_Name }}">
+                  </div>
+                  <div class="form-group">
+                    <label>Description</label>
+                    <textarea class="form-control" name="Product_Description">{{ Product_Description }}</textarea>
+                  </div>
+                  <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" class="form-control" name="Quantity" value="{{ Quantity }}">
+                  </div>
+                  <div class="form-group">
+                    <label>Price</label>
+                    <input type="number" class="form-control" name="Product_Price" step="0.01" value="{{ Product_Price }}">
+                  </div>
+                </div>
+
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {% endfor %}
+        </tbody>
+
         </table>
     </div>
 </div>

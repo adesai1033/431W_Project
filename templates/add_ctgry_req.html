@@ -142,7 +142,7 @@
     <div class="form-container">
         <h2>Request New Category</h2>
         <p class="description">Please provide details about the category you'd like to add to our marketplace.</p>
-        
+
         {% if error %}
             <p class="error-message">{{ error }}</p>
         {% endif %}
@@ -153,20 +153,20 @@
         <form action="/submit_category_request" method="POST">
             <div class="form-group">
                 <label for="category_name">Category Name</label>
-                <input type="text" id="category_name" name="category_name" required 
-                  
+                <input type="text" id="category_name" name="category_name" required
+
             </div>
-            
+
             <div class="form-group">
                 <label for="description">Why should we add this category?</label>
-                <textarea id="description" name="description" required 
-                         
+                <textarea id="description" name="description" required
+
             </div>
 
             <div class="form-group">
                 <label for="example_products">Example Products</label>
-                <textarea id="example_products" name="example_products" required 
-                         
+                <textarea id="example_products" name="example_products" required
+
             </div>
 
             <button type="submit">Submit Request</button>
@@ -175,4 +175,4 @@
         <a href="{{ url_for('add_product') }}" class="back-link">← Back to Add Product</a>
     </div>
 </body>
-</html> 
+</html>
