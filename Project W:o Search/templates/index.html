@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NittanyBusiness</title>
+
+    <style>
+
+        /* Need this styling component to avoid unwanted padding from the browser */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6; /* For better spacing visually */
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f4f7fc;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Navigation header */
+        nav {
+            background: #001841;
+            color: #fff;
+            padding: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        /* Designing the NittanyBusiness name in the header */
+        .logo {
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding-left: 20px;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: #f4f7fc; /* Light background */
+            padding: 12rem 0 3rem;/* Reduced vertical padding */
+            text-align: center;
+        }
+
+        /* Styling for Welcome to NittanyBusiness */
+        .hero-content h1 {
+            font-size: 2.8rem;
+            color: #001841; /* Primary color: PennState Navy */
+            margin-bottom: 1rem;
+        }
+
+        .hero-content p {
+            font-size: 1.2rem;
+            color: #555;
+        }
+
+        .login-button {
+            background: #001841;
+            color: #fff;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            transition: background 0.3s ease;
+            display: inline-block; /* Align icon and text */
+            margin-bottom: 1rem; /* Space below main login button */
+        }
+
+
+        .login-button:hover {
+            background: #002a6b; /* Darker shade */
+        }
+
+        /* Login/Register Links */
+        .auth-links {
+            margin-top: 1.5rem;
+        }
+
+        .auth-links a {
+            color: #001841;
+            text-decoration: underline;
+            margin: 0 10px;
+        }
+
+        /* header styling for the 3 description cards */
+        .feature-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .feature-card p {
+            color: #666;
+        }
+
+        /* Footer */
+        footer {
+            background: #001841; /* Primary color */
+            color: #fff;
+            text-align: center;
+            padding: 1.5rem 0; /* Reduced vertical padding */
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .hover-expand {
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .hover-expand:hover {
+            transform: scale(1.1);
+        }
+
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+
+        /* Push push footer down */
+        .main-content {
+            flex-grow: 1;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <nav>
+            <a href="#" class="logo">
+                NittanyBusiness
+            </a>
+    </nav>
+
+    <!-- Wrap main sections -->
+    <div class="main-content">
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Welcome to the NittanyBusiness Marketplace</h1>
+            <a href="{{ url_for('login') }}" class="login-button">
+                <div class="hover-expand">
+                 Login to Dashboard
+                </div>
+            </a>
+            <div class="auth-links">
+                <span>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></span>
+                <br>
+                <span>Want to join our team? <a href="{{ url_for('helpdesk_app') }}">Apply here</a></span>
+            </div>
+        </div>
+    </section>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>Copyright© 2025 Doja Cats. All rights reserved.</p>
+        </div>
+    </footer>
+
+</body>
+
+</html>

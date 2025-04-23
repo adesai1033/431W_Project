@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <!-- Components previously used in WPA -->
+    <meta charset="UTF-8">
+    <title>Edit Buyer Info</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .form-container {
+            max-width: 700px;
+            margin: 50px auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #001841;
+        }
+        label {
+            font-weight: bold;
+        }
+
+        /* header components: */
+        nav {
+            background: #001841;
+            color: #fff;
+            padding: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .logo {
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding-left: 20px;
+        }
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 0.5rem 1rem;
+            transition: color 0.3s ease;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+        .logout-btn {
+            color: #fff;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 1px solid #fff;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        .logout-btn:hover {
+            background: #fff;
+            color: #001841;
+        }
+    </style>
+
+</head>
+<body>
+
+<nav>
+    <div class="nav-content">
+        <a class="logo">NittanyBusiness</a>
+        <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+    </div>
+
+    <div class="nav-links">
+            <a href="/get_buyer_info">Edit Information</a>
+            <a href="/buyers">Browse</a>
+            <a href="/buyer_order_history">Leave a Review</a>
+    </div>
+</nav>
+
+    <div class="form-container">
+        <h2>Edit Your Information</h2>
+        <form method="POST" action="/get_buyer_info">
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="text" class="form-control" name="new_email" value="{{ info[0] }}">
+                <small class="form-text text-muted">Changing email requires approval from HelpDesk</small>
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" class="form-control" name="new_password">
+            </div>
+
+            <div class="form-group">
+                <label>Business Name:</label>
+                <input type="text" class="form-control" name="business_name" value="{{ info[1] }}">
+            </div>
+
+            <div class="form-group">
+                <label>Zip Code:</label>
+                <input type="text" class="form-control" name="zipcode" value="{{ info[2] }}">
+            </div>
+
+            <div class="form-group">
+                <label>Street Number:</label>
+                <input type="text" class="form-control" name="street_num" value="{{ info[3] }}">
+            </div>
+
+            <div class="form-group">
+                <label>Street Name:</label>
+                <input type="text" class="form-control" name="street_name" value="{{ info[4] }}">
+            </div>
+
+            <div class="form-group">
+                <label>Credit Card Number:</label>
+                <input type="text" class="form-control" name="credit_card_num" value="{{ info[5] }}">
+            </div>
+
+            <div class="form-group">
+                <label>Card Type:</label>
+                <input type="text" class="form-control" name="card_type" value="{{ info[6] }}">
+            </div>
+
+            <div class="form-group">
+                <label>Expire Month:</label>
+                <input type="text" class="form-control" name="expire_month" value="{{ info[7] }}">
+            </div>
+
+            <div class="form-group">
+                <label>Expire Year:</label>
+                <input type="text" class="form-control" name="expire_year" value="{{ info[8] }}">
+            </div>
+
+            <div class="form-group">
+                <label>Security Code:</label>
+                <input type="text" class="form-control" name="security_code" value="{{ info[9] }}">
+            </div>
+
+            <div class="text-center">
+                <input type="submit" class="btn btn-primary" value="Update Information">
+            </div>
+        </form>
+    </div>
+
+</body>
+</html>

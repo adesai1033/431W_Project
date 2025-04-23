@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.4;
+            color: #333;
+            background-color: #f4f7fc;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* header components: */
+        nav {
+            background: #001841;
+            color: #fff;
+            padding: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .logo {
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding-left: 20px;
+        }
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 0.5rem 1rem;
+            transition: color 0.3s ease;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+        .logout-btn {
+            color: #fff;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 1px solid #fff;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        .logout-btn:hover {
+            background: #fff;
+            color: #001841;
+        }
+
+        .logo {
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.3rem;
+            font-weight: bold;
+            padding-left: 20px;
+        }
+
+        .form-container {
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 25px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 3px;
+            font-weight: 500;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.95rem;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        button {
+            background: #001841;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+            margin-top: 15px;
+        }
+
+        button:hover {
+            background: #002a6b;
+        }
+
+        h2 {
+            color: #001841;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        .error-message {
+            color: red;
+            margin-bottom: 15px;
+            text-align: center;
+            padding: 10px;
+            background-color: #ffebee;
+            border-radius: 4px;
+        }
+
+        .success-message {
+            color: green;
+            margin-bottom: 15px;
+            text-align: center;
+            padding: 10px;
+            background-color: #e8f5e9;
+            border-radius: 4px;
+        }
+
+        .price-quantity {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-content">
+            <a href="{{ url_for('index') }}" class="logo">NittanyBusiness</a>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
+
+        <div class="nav-links">
+            <a href="/view_products">View Products</a>
+            <a href="/view_ratings">View Ratings</a>
+            <a href="/add_products">Add Products</a>
+            <a href="/get_seller_info">Edit Information</a>
+        </div>
+    </nav>
+
+    <div class="form-container">
+        <h2>Add a New Product</h2>
+        {% if error %}
+            <p class="error-message">{{ error }}</p>
+        {% endif %}
+        {% if success %}
+            <p class="success-message">{{ success }}</p>
+        {% endif %}
+        <form action="{{ url_for('add_product') }}" method="POST">
+            <div class="form-group">
+                <label for="product_title">Product Title</label>
+                <input type="text" id="product_title" name="product_title" required>
+            </div>
+            <div class="form-group">
+                <label for="product_name">Product Name</label>
+                <input type="text" id="product_name" name="product_name" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Product Description</label>
+                <textarea id="description" name="description" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="category">Category</label>
+                <button type="button" id="backButton" style="display: none; background: none; border: none; color: #001841; font-size: 1.2rem; cursor: pointer; padding: 0; margin-bottom: 5px; text-align: left;">←</button>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <select id="category" name="category" required>
+                        <option value="">Select a category</option>
+                        {% if categories %}
+                            {% for category in categories %}
+                                <option value="{{ category }}">{{ category }}</option>
+                            {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+                <div style="margin-top: 5px; text-align: right;">
+                    <a href="{{ url_for('submit_category_request') }}" style="color: #001841; text-decoration: none; font-size: 0.9rem;">
+                        Don't see your category? Request a new one
+                    </a>
+                </div>
+            </div>
+            <div class="price-quantity">
+                <div class="form-group">
+                    <label for="price">Price ($)</label>
+                    <input type="number" id="price" name="price" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="quantity">Quantity</label>
+                    <input type="number" id="quantity" name="quantity" min="1" required>
+                </div>
+            </div>
+            <button type="submit">Add Product</button>
+        </form>
+    </div>
+
+    <script>
+        let currentParent = "Root";
+        const categorySelect = document.getElementById('category');
+        const backButton = document.getElementById('backButton');
+
+        categorySelect.addEventListener('change', function() {
+            const selectedCategory = this.value;
+            if (selectedCategory) {
+                fetch('/get_subcategories', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `parent_category=${encodeURIComponent(selectedCategory)}`
+                })
+                .then(response => response.json())
+                .then(subcategories => {
+                    if (subcategories && subcategories.length > 0) {
+                        const currentValue = categorySelect.value;
+                        categorySelect.innerHTML = '<option value="">Select a category</option>';
+
+                        // Add parent category
+                        categorySelect.add(new Option(selectedCategory, selectedCategory));
+
+                        // Add subcategories
+                        subcategories.forEach(category => {
+                            categorySelect.add(new Option(category, category));
+                        });
+
+                        // Restore selected value if it exists in the new options
+                        if (currentValue) {
+                            categorySelect.value = currentValue;
+                        }
+
+                        // Show back button and update current parent
+                        backButton.style.display = 'block';
+                        currentParent = selectedCategory;
+                    } else {
+                        // If no subcategories, we're at a leaf node, but still show back button
+                        backButton.style.display = 'block';
+                        currentParent = selectedCategory;
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        });
+
+        backButton.addEventListener('click', function() {
+            if (currentParent !== "Root") {
+                fetch('/get_subcategories', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `parent_category=${encodeURIComponent("Root")}`
+                })
+                .then(response => response.json())
+                .then(categories => {
+                    categorySelect.innerHTML = '<option value="">Select a category</option>';
+                    categories.forEach(category => {
+                        categorySelect.add(new Option(category, category));
+                    });
+
+                    // Hide back button when at root level
+                    backButton.style.display = 'none';
+                    currentParent = "Root";
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        });
+    </script>
+</body>
+</html>

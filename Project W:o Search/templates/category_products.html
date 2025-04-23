@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ category_name }} - NittanyBusiness</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .back-btn {
+            text-decoration: none;
+            color: #001841;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #001841;
+            color: white;
+        }
+        tr:hover {
+            background: #f9f9f9;
+        }
+        .price {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+        .quantity-input {
+            width: 60px;
+            padding: 5px;
+            margin-right: 10px;
+        }
+        .buy-btn {
+            background: #001841;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .buy-btn:hover {
+            background: #002a6b;
+        }
+        .error-message {
+            color: red;
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+        .filter-section {
+            background: white;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .price-input {
+            padding: 8px;
+            margin-right: 10px;
+            width: 100px;
+        }
+        .filter-btn, .clear-btn {
+            background: #001841;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+            height: 36px;
+            line-height: 20px;
+        }
+        .clear-btn {
+            background: #dc3545;
+            margin-left: 10px;
+        }
+        .clear-btn:hover {
+            background: #c82333;
+        }
+        .filter-btn:hover {
+            background: #002a6b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="{{ url_for('buyers') }}" class="back-btn">← Back to Categories</a>
+            <h1>{{ category_name }}</h1>
+        </div>
+
+        <div class="filter-section">
+            <h3>Filter by Price</h3>
+            <form action="{{ url_for('getProductsByPriceRange') }}" method="POST" style="display: inline;">
+                <input type="hidden" name="selected_category" value="{{ category_name }}">
+                <input type="number" name="min_price" class="price-input" placeholder="Min Price" min="0" step="0.01">
+                <input type="number" name="max_price" class="price-input" placeholder="Max Price" min="0" step="0.01">
+                <button type="submit" class="filter-btn">Apply Filter</button>
+            </form>
+            <form action="{{ url_for('getProducts') }}" method="POST" style="display: inline;">
+                <input type="hidden" name="selected_category" value="{{ category_name }}">
+                <button type="submit" class="clear-btn">Clear Filter</button>
+            </form>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>PID</th>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if products %}
+                    {% for product in products %}
+                        <tr>
+                            <td>{{ product[1] }}</td>
+                            <td>{{ product[3] }}</td>
+                            <td>{{ product[5] }}</td>
+                            <td class="price">{{ product[7] }}</td>
+                            <td>{{ product[6] }}</td>
+                            <td>
+                                <form action="/purchase" method="POST" style="display: inline;">
+                                    <input type="hidden" name="listing_id" value="{{ product[1] }}">
+                                    <input type="hidden" name="category" value="{{ category_name }}">
+                                    <input type="number" name="quantity" class="quantity-input" min="1" max="{{ product[6] }}" value="1">
+                                    <button type="submit" class="buy-btn">Buy</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6">No products found.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Components previously used in WPA -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <title>Sellers Page</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        nav {
+            background: #001841;
+            color: #fff;
+            padding: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .logo {
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding-left: 20px;
+        }
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 0.5rem 1rem;
+            transition: color 0.3s ease;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+        .logout-btn {
+            color: #fff;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 1px solid #fff;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        .logout-btn:hover {
+            background: #fff;
+            color: #001841;
+        }
+        .main-content {
+            padding: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-content">
+        <a class="logo">NittanyBusiness</a>
+        <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+    </div>
+
+    <div class="nav-links">
+        <a href="/view_products">View Products</a>
+        <a href="/view_ratings">View Ratings</a>
+        <a href="/add_products">Add Products</a>
+        <a href="/get_seller_info">Edit Information</a>
+    </div>
+</nav>
+
+<div class="main-content">
+    {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ error }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    {% endif %}
+
+    <div class="card-body">
+
+        <p style="color: green; opacity: 1;" class="text-center font-weight-bold mb-4">
+            balance: $ {{ balance }}
+        </p>
+
+        <h2 class="card-title text-center">Your Products Currently Listed</h2>
+        <table class="table table-dark table-bordered mt-4">
+            <thead>
+            <tr>
+                <th scope="col">Title</th>
+                <th scope="col">Name</th>
+                <th scope="col">Description</th>
+                <th scope="col">Quantity</th>
+                <th scope="col">Price</th>
+                <th scope="col">Action</th>
+            </tr>
+            </thead>
+            <tbody>
+        {% for Seller_Email, Listing_ID, Category, Product_Title, Product_Name, Product_Description, Quantity, Product_Price in result %}
+        <tr>
+            <td>{{ Product_Title }}</td>
+            <td>{{ Product_Name }}</td>
+            <td>{{ Product_Description }}</td>
+            <td>{{ Quantity }}</td>
+            <td>{{ Product_Price }}</td>
+            <td>
+                <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editModal{{ Listing_ID }}">Edit Product</button>
+
+                <form action="{{ url_for('delete_product') }}" method="POST" style="display:inline;">
+                    <input type="hidden" name="Seller_Email" value="{{ Seller_Email }}">
+                    <input type="hidden" name="Listing_ID" value="{{ Listing_ID }}">
+                    <input type="hidden" name="Category" value="{{ Category }}">
+                    <input type="hidden" name="Product_Title" value="{{ Product_Title }}">
+                    <input type="hidden" name="Product_Name" value="{{ Product_Name }}">
+                    <input type="hidden" name="Product_Description" value="{{ Product_Description }}">
+                    <input type="hidden" name="Quantity" value="{{ Quantity }}">
+                    <input type="hidden" name="Product_Price" value="{{ Product_Price }}">
+                    <input type="hidden" name="Status" value="{{ Status }}">
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+
+                <!-- Promote Button -->
+                <button class="btn btn-warning btn-sm" data-toggle="modal" data-target="#promoteModal{{ Listing_ID }}">Promote</button>
+            </td>
+        </tr>
+
+        <!-- Edit Modal -->
+        <div class="modal" id="editModal{{ Listing_ID }}" tabindex="-1" role="dialog">
+          <div class="modal-dialog" role="document">
+            <form method="POST" action="{{ url_for('edit_product') }}">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Editing - {{ Product_Title }}</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <input type="hidden" name="Seller_Email" value="{{ Seller_Email }}">
+                  <input type="hidden" name="Listing_ID" value="{{ Listing_ID }}">
+                  <input type="hidden" name="Status" value="{{ Status }}">
+                  <input type="hidden" name="Category" value="{{ Category }}">
+
+                  <div class="form-group">
+                    <label>Product Title</label>
+                    <input type="text" class="form-control" name="Product_Title" value="{{ Product_Title }}">
+                  </div>
+                  <div class="form-group">
+                    <label>Product Name</label>
+                    <input type="text" class="form-control" name="Product_Name" value="{{ Product_Name }}">
+                  </div>
+                  <div class="form-group">
+                    <label>Description</label>
+                    <textarea class="form-control" name="Product_Description">{{ Product_Description }}</textarea>
+                  </div>
+                  <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" class="form-control" name="Quantity" value="{{ Quantity }}">
+                  </div>
+                  <div class="form-group">
+                    <label>Price</label>
+                    <input type="number" class="form-control" name="Product_Price" step="0.01" value="{{ Product_Price }}">
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Promote Modal -->
+        <div class="modal" id="promoteModal{{ Listing_ID }}" tabindex="-1" role="dialog">
+          <div class="modal-dialog" role="document">
+            <form method="POST" action="{{ url_for('promote_product') }}">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Promote Product - {{ Product_Title }}</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <p>Promoting this product will cost 5% of the product's price. Are you sure?</p>
+                  <input type="hidden" name="Product_Name" value="{{ Product_Name }}">
+                  <input type="hidden" name="Product_Price" value="{{ Product_Price }}">
+                  <input type="hidden" name="Listing_ID" value="{{ Listing_ID }}">
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn btn-warning">Confirm Promotion</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {% endfor %}
+        </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+        integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+        crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+        crossorigin="anonymous"></script>
+
+</body>
+</html>
