@@ -680,35 +680,6 @@ def submit_review():
     submit_new_review(order_id, rate, desc)
     return redirect(url_for('buyer_order_history'))
 
-@app.route('/category/<category_name>')
-def view_category_products(category_name):
-    if 'email' not in session:
-        return redirect(url_for('login'))
-
-    connection = sql.connect('database.db')
-    cursor = connection.cursor()
-
-    # Get products in this category
-    cursor.execute('''
-        SELECT * FROM Product_Listings 
-        WHERE Category = ?
-    ''', (category_name,))
-    products = cursor.fetchall()
-
-    # Get subcategories
-    cursor.execute('''
-        SELECT category_name FROM Categories 
-        WHERE parent_category = ?
-    ''', (category_name,))
-    subcategories = cursor.fetchall()
-
-    connection.close()
-
-    return render_template('category_products.html',
-                           category_name=category_name,
-                           products=products,
-                           subcategories=subcategories)
-
 
 def getProductsByPriceRange(category_name, min_price=None, max_price=None):
     connection = sql.connect('database.db')
@@ -736,25 +707,6 @@ def getProductsByPriceRange(category_name, min_price=None, max_price=None):
     connection.close()
 
     return products
-
-def getProductsByTitle(search=None):
-    connection = sql.connect('database.db')
-    cursor = connection.cursor()
-
-    query = """
-            SELECT Product_Title, Product_Name, Product_Description, Quantity, Product_Price
-            FROM Product_Listings 
-            WHERE Product_Title LIKE ? OR Product_Name LIKE ?
-            """
-    search_pattern = f'%{search}%'
-    params = [search_pattern, search_pattern]
-
-    cursor.execute(query, params)
-    products = cursor.fetchall()
-    connection.close()
-
-    return products
-
 ###buyer and category code ending
 
 
@@ -776,6 +728,10 @@ def getParentCategory(category_name):
 @app.route('/getProducts', methods=['POST'])
 def getProducts():
     selected_category = request.form['selected_category']
+    
+    connection = sql.connect('database.db')
+    cursor = connection.cursor()
+    
     final = [selected_category]
     subcategories = getSubCategories(selected_category)
     final += subcategories
@@ -783,19 +739,19 @@ def getProducts():
         for k in getSubCategories(i):
             if k != []:
                 final.append(k)
-    connection = sql.connect('database.db')
-    cursor = connection.cursor()
+    
     placeholders = ', '.join(['?'] * len(final))
     query = f"""
         SELECT DISTINCT * FROM Product_Listings
-        WHERE category IN ({placeholders});
+        WHERE Category IN ({placeholders})
     """
     cursor.execute(query, final)
-    rows = cursor.fetchall()
+    products = cursor.fetchall()
     connection.close()
-    for i in range(len(rows)):
-        rows[i] = list(rows[i])
-    return rows
+    
+    return render_template('category_products.html',
+                         category_name=selected_category,
+                         products=products)
 
 @app.route('/getProductsByPriceRange', methods=['POST'])
 def getProductsByPriceRange():
@@ -819,7 +775,7 @@ def getProductsByPriceRange():
     placeholders = ', '.join(['?'] * len(final))
     query = f"""
         SELECT DISTINCT * FROM Product_Listings
-        WHERE category IN ({placeholders})
+        WHERE Category IN ({placeholders})
     """
     params = final
 
@@ -830,15 +786,13 @@ def getProductsByPriceRange():
         query += " AND CAST(REPLACE(REPLACE(Product_Price, '$', ''), ',', '') AS DECIMAL) <= ?"
         params.append(max_price)
 
-    print("Query:", query)  # Debug print
-    print("Params:", params)  # Debug print
-
     cursor.execute(query, params)
-    rows = cursor.fetchall()
+    products = cursor.fetchall()
     connection.close()
 
-    # Convert tuples to lists for JSON serialization
-    return [list(row) for row in rows]
+    return render_template('category_products.html',
+                         category_name=selected_category,
+                         products=products)
 
 
 def get_current_date():
@@ -937,7 +891,7 @@ def purchase():
                        (listing_id,))
         product = cursor.fetchone()
         if not product:
-            return redirect(url_for('view_category_products', category_name=category, error='Product not found'))
+            return redirect(url_for('buyers'))
 
         product_title, price_str, seller_email = product
 
@@ -961,9 +915,9 @@ def purchase():
         return redirect(url_for('secure_checkout'))
 
     except Error as e:
-        return redirect(url_for('view_category_products', category_name=category, error=str(e)))
+        return redirect(url_for('buyers'))
     except ValueError as e:
-        return redirect(url_for('view_category_products', category_name=category, error='Invalid price format'))
+        return redirect(url_for('buyers'))
     finally:
         connection.close()
 
@@ -1105,6 +1059,58 @@ def query():
     except Error as e:
         return f"Error: {str(e)}"
 '''
+
+@app.route('/search_products', methods=['POST'])
+def search_products():
+    if 'email' not in session:
+        return redirect(url_for('login'))
+
+    search_term = request.form.get('search', '').lower()
+    category = request.form.get('category', '')
+
+    connection = sql.connect('database.db')
+    cursor = connection.cursor()
+
+    try:
+        # If a category is selected, search within that category
+        if category and category != 'None':
+            final = [category]
+            subcategories = getSubCategories(category)
+            final += subcategories
+            for i in subcategories:
+                for k in getSubCategories(i):
+                    if k != []:
+                        final.append(k)
+
+            placeholders = ', '.join(['?'] * len(final))
+            query = f"""
+                SELECT DISTINCT * FROM Product_Listings
+                WHERE Category IN ({placeholders})
+                AND LOWER(Product_Title) LIKE ?
+            """
+            params = final + [f'%{search_term}%']
+        else:
+            # Search across all products
+            query = """
+                SELECT DISTINCT * FROM Product_Listings
+                WHERE LOWER(Product_Title) LIKE ?
+            """
+            params = [f'%{search_term}%']
+
+        print(f"Executing query: {query} with params: {params}")  # Debug print
+        cursor.execute(query, params)
+        products = cursor.fetchall()
+        print(f"Found {len(products)} products")  # Debug print
+
+        return render_template('category_products.html',
+                             category_name=category if category and category != 'None' else 'Search Results',
+                             products=products)
+
+    except Error as e:
+        print(f"Error in search: {str(e)}")  # Debug print
+        return redirect(url_for('buyers'))
+    finally:
+        connection.close()
 
 if __name__ == '__main__':
     app.run(debug=True)

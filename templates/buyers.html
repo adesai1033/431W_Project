@@ -181,6 +181,46 @@
             margin-bottom: 1rem;
             text-align: center;
         }
+
+        .search-section {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .search-title {
+            color: #001841;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px;
+            font-size: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .search-button {
+            background: #001841;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .search-button:hover {
+            background: #002a6b;
+        }
     </style>
 </head>
 <body>
@@ -193,11 +233,12 @@
         <div class="nav-links">
             <a href="/get_buyer_info">Edit Information</a>
             <a href="/buyers">Browse</a>
+            <a href="/buyer_order_history">Leave a Review</a>
         </div>
     </nav>
 
     <div class="main-content">
-        <h1 class="page-title">Browse Products by Category</h1>
+        <h1 class="page-title">Browse Products</h1>
 
         <div class="category-container">
             {% if current_category %}
@@ -208,10 +249,6 @@
                     <form action="{{ url_for('buyers') }}" method="POST">
                         <input type="hidden" name="category" value="{{ parent_category }}">
                         <button type="submit" class="back-btn">← Back to {{ parent_category }}</button>
-                    </form>
-                {% else %}
-                    <form action="{{ url_for('buyers') }}" method="GET">
-                        <button type="submit" class="back-btn">← Back to Root Categories</button>
                     </form>
                 {% endif %}
             {% endif %}
@@ -226,8 +263,20 @@
             </form>
 
             {% if current_category %}
-                <a href="{{ url_for('view_category_products', category_name=current_category) }}" class="view-products-btn">View Products in {{ current_category }}</a>
+                <form action="{{ url_for('getProducts') }}" method="POST">
+                    <input type="hidden" name="selected_category" value="{{ current_category }}">
+                    <button type="submit" class="view-products-btn">View Products in {{ current_category }}</button>
+                </form>
             {% endif %}
+
+            <div class="search-section">
+                <h3 class="search-title">Search Products by Name</h3>
+                <form action="{{ url_for('search_products') }}" method="POST" class="search-bar">
+                    <input type="text" name="search" class="search-input" placeholder="Enter product name...">
+                    <input type="hidden" name="category" value="{{ current_category }}">
+                    <button type="submit" class="search-button">Search</button>
+                </form>
+            </div>
         </div>
     </div>
 </body>
